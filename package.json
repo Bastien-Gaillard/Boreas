@@ -10,7 +10,9 @@
   "author": "Bastien",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.5.0"
+    "axios": "^0.27.2",
+    "discord.js": "^14.5.0",
+    "request": "^2.88.2"
   },
-  "type": "module"
+  "type": "commonjs"
 }
