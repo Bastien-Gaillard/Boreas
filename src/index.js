@@ -1,5 +1,5 @@
 //Dependance et import 
-const { Client, GatewayIntentBits, GuildChannel } = require('discord.js');
+const { Client, GatewayIntentBits, GuildChannel, REST, Routes } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const fs = require("fs"); 
@@ -7,9 +7,11 @@ const { channels } = require('discord.js');
 const { info, dir } = require('console');
 const config = JSON.parse(fs.readFileSync("./config.json"));
 const token = config.token;
+const guildId = config.guildId;
+const clientId = config.clientId;
 const meteoKey = config.meteoKey;
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
+const rest = new REST(({ version: 10})).setToken(token);
 //Object pour récolter toutes les infos de la ville
 let Data = class {
     constructor(city, description,country,temp, feels_like, wind_speed, wind_deg, pressure, humidity, visibility) {
@@ -121,21 +123,20 @@ let Data = class {
 //Interaction client 
 client.on( 'interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
-    
-    //Si la commande tapé est 'user' on appele la fonction weather() et on l'affiche dans un embed
-    if (interaction.commandName === 'ping') {
-        var data =  await weather("trets");
-        var information = "**" + data.city + ", " + data.country + "**" + 
-            "\n" + data.celsiusTemp(data.temp) + " °C" + 
-            "\n     Feels like " + data.celsiusTemp(data.feels_like) + " °C. " + data.description.charAt(0).toUpperCase() + data.description.slice(1);
-        const exampleEmbed = new EmbedBuilder()
-            .setColor(0x0099FF)
-            .setDescription(information)
-            .addFields(
-                { name: data.wind_speed + "m/s " + data.orientation(data.wind_deg), value: "Humidity: " + data.humidity + "%", inline: true},
-                { name: data.pressure + "hPa", value: "Visibility: " + data.visibilityKm(data.visibility) + "km", inline: true },
-            );
-        interaction.client.channels.cache.get("873878362806972436").send({ embeds: [exampleEmbed] });
+    var city;
+    var data;
+    //Si la commande tapé est 'weather' on appele la fonction weather() et on l'affiche dans un embed
+    if (interaction.commandName === 'weather') {
+        city = interaction.options.getString('city');
+        if(city != null){
+            data =  await weather(city);
+            display(interaction, data);
+        } else {
+            city = randomCity();
+            data =  await weather(city);
+            display(interaction, data);
+        }
+        
     }
   });
   
@@ -167,6 +168,78 @@ const weather = async function (city) {
         console.log("Erreur " + e);
     }
 } 
+const display = async function (interaction, data) { 
+    
+    var information = "**" + data.city + ", " + data.country + "**" + 
+        "\n" + data.celsiusTemp(data.temp) + " °C" + 
+        "\n     Feels like " + data.celsiusTemp(data.feels_like) + " °C. " + data.description.charAt(0).toUpperCase() + data.description.slice(1);
+    const exampleEmbed = new EmbedBuilder()
+    .setColor(0x0099FF)
+    .setDescription(information)
+    .addFields(
+        { name: data.wind_speed + "m/s " + data.orientation(data.wind_deg), value: "Humidity: " + data.humidity + "%", inline: true},
+        { name: data.pressure + "hPa", value: "Visibility: " + data.visibilityKm(data.visibility) + "km", inline: true },
+    );
+    interaction.client.channels.cache.get("873878362806972436").send({ embeds: [exampleEmbed] });
+}
+const getCountry = async function () { 
+    
+    try {
+        return await axios.get("https://countriesnow.space/api/v0.1/countries")
+        .then((reponse) => {
+            //return tous les pays avec leurs villes
+            return reponse['data']['data'];
+
+
+        }).catch((e) => {
+            console.log("searchChannels ERROR:", e);
+        });
+    } catch(e){
+        console.log("Erreur " + e);
+    }
+}
+const getCity = async function () { 
+    var cities = [];
+    var country = await getCountry();
+    for(let i = 0; i < country.length; i++){
+        cities.push(country[i]['cities'][0]);
+        if(cities[i] == undefined){
+            cities.splice(i, 1);
+        }
+    }
+    return cities;
+}
+const randomCity = async function(){
+    var cities = await getCity();
+    return cities[Math.round( Math.random() * cities.length )];
+}
 client.once('ready', () => {
 	console.log('Ready!');
 });
+
+async function main() {
+    const commands = [
+        {
+            name: 'weather',
+            description: 'Give city weather',
+            options: [
+              {
+                  name: 'city',
+                  description: 'the city',
+                  type: 3
+              }
+            ]
+        }
+
+    ];
+    try {
+      console.log('Started refreshing application (/) commands.');
+      await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+        body: commands,
+      });
+      client.login(token);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  main();
