@@ -1,124 +1,17 @@
 //Dependance et import 
-const { Client, GatewayIntentBits, GuildChannel, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const fs = require("fs"); 
 const { channels } = require('discord.js');
-const { info, dir } = require('console');
 const config = JSON.parse(fs.readFileSync("./config.json"));
 const token = config.token;
 const guildId = config.guildId;
 const clientId = config.clientId;
 const meteoKey = config.meteoKey;
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-const rest = new REST(({ version: 10})).setToken(token);
-//Object pour récolter toutes les infos de la ville
-let Data = class {
-    constructor(city, description,country,temp, feels_like, wind_speed, wind_deg, pressure, humidity, visibility) {
-        this.city = city;
-        this.description = description;
-        this.country = country;
-        this.temp = temp;
-        this.feels_like = feels_like;
-        this.wind_speed = wind_speed;
-        this.wind_deg = wind_deg;
-        this.pressure = pressure;
-        this.humidity = humidity;
-        this.visibility = visibility;
-    }
-    //Getter et setteur
-    get city(){ 
-        return this._city;
-    }
-    set city(value){ 
-        this._city  = value;
-    }
-    get description(){ 
-        return this._description;
-    }
-    set description(value){ 
-        this._description  = value;
-    }
-    get country(){ 
-        return this._country;
-    }
-    set country(value){ 
-        this._country  = value;
-    }
-    get temp(){ 
-        return this._temp;
-    }
-    set temp(value){ 
-        this._temp  = value;
-    }
-    get feels_like(){ 
-        return this._feels_like;
-    }
-    set feels_like(value){ 
-        this._feels_like  = value;
-    }
-    get wind_speed(){ 
-        return this._wind_speed;
-    }
-    set wind_speed(value){ 
-        this._wind_speed  = value;
-    }
-    get wind_deg(){ 
-        return this._wind_deg;
-    }
-    set wind_deg(value){ 
-        this._wind_deg  = value;
-    }
-    get pressure(){ 
-        return this._pressure;
-    }
-    set pressure(value){ 
-        this._pressure  = value;
-    }
-    get humidity(){ 
-        return this._humidity;
-    }
-    set humidity(value){ 
-        this._humidity  = value;
-    }
-    get visibility(){ 
-        return this._visibility;
-    }
-    set visibility(value){ 
-        this._visibility  = value;
-    }
-    //Method 
-    //Convertie la temperature (Kelvin -> Celsius)
-    celsiusTemp(temp){  
-        return Math.round(temp - 273.15);
-    }
-    //Donne la direction du vent en fonction du degrée du vent
-    orientation(deg){  
-        let direction = "";
-        if(deg >= 337.5 || (deg >= 0 && deg < 22.5)){
-            direction = "N";
-        } else if(deg >= 22.5 && deg < 67.5){
-            direction = "NE";
-        } else if(deg >= 67.5 && deg < 112.5){
-            direction = "E";
-        } else if(deg >= 112.5 && deg < 157.5){
-            direction = "SE";;
-        } else if(deg >= 157.5 && deg < 202.5){
-            direction = "S";
-        } else if(deg >= 202.5 && deg < 247.5){
-            direction = "SW";
-        } else if(deg >= 247.5 && deg < 292.5) {
-            direction = "W";
-        } else if(deg >= 292.5 && deg < 337.5) {
-            direction = "NW";
-        }
-        return direction;
-    }
-    //Convertie la visibilité (m -> km)
-    visibilityKm(visibility){
-        return visibility / 1000;
-    }
-};
+const rest = new REST(({ version: '10'})).setToken(token);
+const Data = require("./data");
 
 //Interaction client 
 client.on( 'interactionCreate', async interaction => {
@@ -128,44 +21,48 @@ client.on( 'interactionCreate', async interaction => {
     //Si la commande tapé est 'weather' on appele la fonction weather() et on l'affiche dans un embed
     if (interaction.commandName === 'weather') {
         city = interaction.options.getString('city');
+        console.log(city);
         if(city != null){
-            data =  await weather(city);
-            display(interaction, data);
+            try {
+                data =  await weather(city);
+                if(data == null) return await interaction.reply("An error has occurred"); 
+                display(interaction, data);
+            } catch (error) {
+                console.log(error);
+            }  
         } else {
+            try {
             city = randomCity();
             data =  await weather(city);
+            if(data == null) return await interaction.reply("An error has occurred"); 
             display(interaction, data);
+            } catch (error) {
+                console.log(error); 
+            }
         }
         
     }
-  });
-  
-
-client.login(token);
-
+});
 //On récupere la météo de la ville voulu
 const weather = async function (city) { 
     try {
-        return await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${meteoKey} `)
-        .then((reponse) => {
-            //On créer et retourne l'objet Data avec les valeurs récuperer de la requete
-            return new Data(
-                reponse['data']['name'],
-                reponse['data']['weather'][0]['description'],
-                reponse['data']['sys']['country'],
-                reponse['data']['main']['temp'],
-                reponse['data']['main']['feels_like'],
-                reponse['data']['wind']['speed'],
-                reponse['data']['wind']['deg'],
-                reponse['data']['main']['pressure'],
-                reponse['data']['main']['humidity'],
-                reponse['data']['visibility']
-                );
-        }).catch((e) => {
-            console.log("searchChannels ERROR:", e);
-        });
+        let request =  await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${meteoKey} `);
+        console.log("La reponse est : " + request);
+        return new Data(
+            request['data']['name'],
+            request['data']['weather'][0]['description'],
+            request['data']['sys']['country'],
+            request['data']['main']['temp'],
+            request['data']['main']['feels_like'],
+            request['data']['wind']['speed'],
+            request['data']['wind']['deg'],
+            request['data']['main']['pressure'],
+            request['data']['main']['humidity'],
+            request['data']['visibility']
+        );
     } catch(e){
         console.log("Erreur " + e);
+        return null;
     }
 } 
 const display = async function (interaction, data) { 
@@ -180,7 +77,7 @@ const display = async function (interaction, data) {
         { name: data.wind_speed + "m/s " + data.orientation(data.wind_deg), value: "Humidity: " + data.humidity + "%", inline: true},
         { name: data.pressure + "hPa", value: "Visibility: " + data.visibilityKm(data.visibility) + "km", inline: true },
     );
-    interaction.client.channels.cache.get("873878362806972436").send({ embeds: [exampleEmbed] });
+    interaction.reply({ embeds: [exampleEmbed] });
 }
 const getCountry = async function () { 
     
@@ -189,8 +86,6 @@ const getCountry = async function () {
         .then((reponse) => {
             //return tous les pays avec leurs villes
             return reponse['data']['data'];
-
-
         }).catch((e) => {
             console.log("searchChannels ERROR:", e);
         });
@@ -217,7 +112,8 @@ client.once('ready', () => {
 	console.log('Ready!');
 });
 
-async function main() {
+(async ()=>{
+
     const commands = [
         {
             name: 'weather',
@@ -230,16 +126,17 @@ async function main() {
               }
             ]
         }
-
     ];
     try {
       console.log('Started refreshing application (/) commands.');
-      await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      await rest.put(Routes.applicationCommands(clientId), {
         body: commands,
       });
-      client.login(token);
+      console.log('Successfully reloaded application (/) commands.');
     } catch (err) {
       console.log(err);
     }
-  }
-  main();
+})()
+
+client.login(token);
+
