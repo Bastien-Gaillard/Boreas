@@ -12,6 +12,7 @@ const meteoKey = config.meteoKey;
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const rest = new REST(({ version: '10' })).setToken(token);
 const Data = require("./data");
+const { userInfo } = require('os');
 
 //Interaction client
 client.on('interactionCreate', async interaction => {
@@ -22,11 +23,11 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === 'weather') {
 		await interaction.deferReply();
         city = interaction.options.getString('city');
-        console.time("timer");
+
         if (city != null) {
             try {
                 data = await weather(city);
-                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(data || "An error has occurred");
+                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
                 await display(interaction, data);
             } catch (e) {
                 console.log(e);
@@ -35,13 +36,12 @@ client.on('interactionCreate', async interaction => {
             try {
                 city = await randomCity();
                 data = await weather(city);
-                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(data || "An error has occurred");
+                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
                 await display(interaction, data);
             } catch (e) {
                 console.log(e);
             }
         }
-        console.timeEnd("timer");
     }
 });
 //On récupere la météo de la ville voulu
@@ -61,7 +61,7 @@ const weather = async function (city) {
             request['data']['visibility']
         );
     } catch (e) {
-        console.error("Erreur", e.response?.data?.message);
+        console.error("Error weather", e.response?.data?.message);
         return e.response?.data?.message;
     }
 }
@@ -79,18 +79,66 @@ const display = async function (interaction, data) {
             );
         await interaction.editReply({ embeds: [exampleEmbed] });
     } catch (e) {
-        console.error("L'erreur est", e)
+        console.error("Error display", e)
     }
 
 }
 
+const displayError = async function (interaction, data) {
+    try {
+        const exampleEmbed = new EmbedBuilder()
+            .setColor(0xFF001A)
+            .setDescription(data)
+        await interaction.editReply({ embeds: [exampleEmbed] });
+    } catch (e) {
+        console.error("Error display error", e)
+    }
+
+}
+function getFormattedDate(today) 
+{
+    var week = new Array('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
+    var month = new Array('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+    var day  = week[today.getDay()];
+    var month   = month[today.getMonth()];
+    var dd   = today.getDate();
+    var yyyy = today.getFullYear();
+    var hour = today.getHours();
+    var min = today.getMinutes();
+    var sec = today.getSeconds();
+
+    if(dd<10) { dd='0'+dd } 
+    if(min<10) { min='0'+min } 
+    if(sec<10) { sec='0'+sec }
+    return day + " " + month + " " + dd + " " + yyyy + " " + hour + ":" + min + ":" + sec;
+}
+function getUser(interaction){
+    console.log(interaction.user.tag);
+}
+const writeFile = function(file, information){
+    fs.appendFile(file, information, function (err) {
+        if (err) return console.log(err);
+        console.log('Log add');
+      });
+}
+const writeLog = function(file){
+    var date = new Date();
+    var today = getFormattedDate(date);
+    var user = getUser(interaction);
+
+    today = "\n[" + today + "]";
+    var log = today + user;
+    console.log(log);
+    //writeFile(file, today);
+
+}
 const getCountries = async function () {
     try {
         let request = await axios.get("https://countriesnow.space/api/v0.1/countries");
         // console.log("La reponse est : ", request);
         return request.data.data;
     } catch (e) {
-        console.error("Erreur", e);
+        console.error("Error country", e);
     }
 }
 const getCities = async function () {
