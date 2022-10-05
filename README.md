@@ -9,7 +9,7 @@ A discord bot that gives you the weather in the chosen city
 
 ## Create your bot
 
-- Go to the following link [Discord developers] https://discord.com/developers/applications
+- Go to the following link [Discord developers]https://discord.com/developers/applications
 - Create a new app
 - Remember to invite your bot to the desired server
 
