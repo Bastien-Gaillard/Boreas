@@ -26,8 +26,15 @@ client.on('interactionCreate', async interaction => {
         if (city != null) {
             try {
                 data = await weather(city);
-                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
-                await display(interaction, data);
+                if (typeof data == "string" || data == null || typeof data == "undefined"){
+                    var type = "[ERROR]"
+                    writeLog("./errors.log", interaction, type, data, city);
+                    return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
+                } else {
+                    var type = "[SUCESS]"
+                    writeLog("./errors.log", interaction, type, data, city);
+                    await display(interaction, data);
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -35,8 +42,15 @@ client.on('interactionCreate', async interaction => {
             try {
                 city = await randomCity();
                 data = await weather(city);
-                if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
-                await display(interaction, data);
+                if (typeof data == "string" || data == null || typeof data == "undefined"){
+                    var type = "[ERROR]"
+                    writeLog("./errors.log", interaction, type, data, city);
+                    return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
+                } else {
+                    var type = "[SUCESS]"
+                    writeLog("./errors.log", interaction, type, data, city);
+                    await display(interaction, data);
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -117,14 +131,15 @@ const writeFile = function (file, information) {
         if (err) return console.error(err);
     });
 }
-const writeLog = function (file) {
+const writeLog = function (file, interaction, type, information, city) {
     var date = new Date();
     var today = getFormattedDate(date);
     var user = getUser(interaction);
 
     today = "\n[" + today + "]";
-    var log = today + user;
+    var log = today + "[" + user + "]" + type + information + " (The city was " + city + ")";
     console.log(log);
+    writeFile(file, log);
 }
 const getCountries = async function () {
     try {
