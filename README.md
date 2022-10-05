@@ -36,7 +36,7 @@
 - Créer un compte sur https://openweathermap.org
 - Récuperer la API key
 - Ajoutez la ```json
-"token": ""
+"meteoKey": ""
 ```
 
 ## Lancer le bot
