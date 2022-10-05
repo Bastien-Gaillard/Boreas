@@ -25,17 +25,20 @@
 ```
 - Récuperer le clientId 
 ![image](https://user-images.githubusercontent.com/83158666/194072353-ba2595eb-c23a-482a-b7ca-eb89b428a9e9.png)
-- Ajoutez le à ```json
+- Ajoutez le à 
+```json
 "clientId": ""
 ```
 - Récuperer votre token 
 ![image](https://user-images.githubusercontent.com/83158666/194072826-2ae0b310-9af9-438b-bc7e-f99f0730f79a.png)
-- Ajoutez le à ```json
+- Ajoutez le à 
+```json
 "token": ""
 ```
 - Créer un compte sur https://openweathermap.org
 - Récuperer la API key
-- Ajoutez la ```json
+- Ajoutez la 
+```json
 "meteoKey": ""
 ```
 
