@@ -1,21 +1,22 @@
 # Boreas
- Un bot discord qui donne la météo
- 
- ## Installation 
- - Télécharger le projet 
- - Aller dans le dossier ```src```
- - Créer le fichier ```config.json```
 
-## Créer votre bot 
+A discord bot that gives you the weather in the chosen city
 
-- Allez sur le lien suivant [Discord developers] https://discord.com/developers/applications
-- Créer une nouvelle application (new application) 
-- Pensez à inviter votre bot sur le serveur voulu
+ ## Set up
+ - Download the project
+ - Go to the ```src``` folder
+ - Create the ```config.json``` file
+
+## Create your bot
+
+- Go to the following link [Discord developers] https://discord.com/developers/applications
+- Create a new app
+- Remember to invite your bot to the desired server
 
 ## config.json
 
 
-- Ouvrez le fichier que vous venez de créer et ajoutez le code suivant
+- Open the file you just created and compose the following code
 ```json
  {
     "clientId": "",
@@ -23,25 +24,30 @@
     "meteoKey": ""
 }
 ```
-- Récuperer le clientId 
+- Get your clientId 
 ![image](https://user-images.githubusercontent.com/83158666/194072353-ba2595eb-c23a-482a-b7ca-eb89b428a9e9.png)
-- Ajoutez le à 
+- Add it to
 ```json
 "clientId": ""
 ```
-- Récuperer votre token 
+- Get your token 
 ![image](https://user-images.githubusercontent.com/83158666/194072826-2ae0b310-9af9-438b-bc7e-f99f0730f79a.png)
-- Ajoutez le à 
+- Add it to
 ```json
 "token": ""
 ```
-- Créer un compte sur https://openweathermap.org
-- Récuperer la API key
-- Ajoutez la 
+- Create an account on https://openweathermap.org
+- Get your API key
+- Add to
 ```json
 "meteoKey": ""
 ```
 
-## Lancer le bot
+## Launch the bot
 
-- ```node index.js``` dans l'invité de commande
+- ```node index.js``` in command prompt
+
+## Fonctionnalité 
+
+- /weather city to get the weather forecast for the chosen city
+- /weather to get the weather forecast for a random city
