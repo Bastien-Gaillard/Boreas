@@ -11,7 +11,6 @@ const Data = class {
         this.pressure = pressure;
         this.humidity = humidity;
         this.visibility = visibility;
-        this.request = request
     }
     //Getter et setteur
     get city(){ 

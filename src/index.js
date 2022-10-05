@@ -17,12 +17,11 @@ const { userInfo } = require('os');
 //Interaction client
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
-    var city;
-    var data;
     //Si la commande tapé est 'weather' on appele la fonction weather() et on l'affiche dans un embed
     if (interaction.commandName === 'weather') {
-		await interaction.deferReply();
-        city = interaction.options.getString('city');
+        await interaction.deferReply();
+        var city = interaction.options.getString('city');;
+        var data;
 
         if (city != null) {
             try {
@@ -30,7 +29,7 @@ client.on('interactionCreate', async interaction => {
                 if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
                 await display(interaction, data);
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         } else {
             try {
@@ -39,7 +38,7 @@ client.on('interactionCreate', async interaction => {
                 if (typeof data == "string" || data == null || typeof data == "undefined") return await interaction.editReply(displayError(interaction, data) || "An error has occurred");
                 await display(interaction, data);
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
     }
@@ -47,21 +46,21 @@ client.on('interactionCreate', async interaction => {
 //On récupere la météo de la ville voulu
 const weather = async function (city) {
     try {
-        let request = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${meteoKey} `);
+        let weatherres = (await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${meteoKey}`)).data;
         return new Data(
-            request['data']['name'],
-            request['data']['weather'][0]['description'],
-            request['data']['sys']['country'],
-            request['data']['main']['temp'],
-            request['data']['main']['feels_like'],
-            request['data']['wind']['speed'],
-            request['data']['wind']['deg'],
-            request['data']['main']['pressure'],
-            request['data']['main']['humidity'],
-            request['data']['visibility']
+            weatherres['name'],
+            weatherres['weather'][0]['description'],
+            weatherres['sys']['country'],
+            weatherres['main']['temp'],
+            weatherres['main']['feels_like'],
+            weatherres['wind']['speed'],
+            weatherres['wind']['deg'],
+            weatherres['main']['pressure'],
+            weatherres['main']['humidity'],
+            weatherres['visibility']
         );
     } catch (e) {
-        console.error("Error weather", e.response?.data?.message);
+        console.error("Error weather", e, e?.response?.status, e?.response?.data, e.response?.data?.message);
         return e.response?.data?.message;
     }
 }
@@ -70,58 +69,55 @@ const display = async function (interaction, data) {
         "\n" + data.celsiusTemp(data.temp) + " °C" +
         "\n     Feels like " + data.celsiusTemp(data.feels_like) + " °C. " + data.description.charAt(0).toUpperCase() + data.description.slice(1);
     try {
-        const exampleEmbed = new EmbedBuilder()
+        const weatherEmbed = new EmbedBuilder()
             .setColor(0x0099FF)
             .setDescription(information)
             .addFields(
                 { name: data.wind_speed + "m/s " + data.orientation(data.wind_deg), value: "Humidity: " + data.humidity + "%", inline: true },
                 { name: data.pressure + "hPa", value: "Visibility: " + data.visibilityKm(data.visibility) + "km", inline: true },
             );
-        await interaction.editReply({ embeds: [exampleEmbed] });
+        await interaction.editReply({ embeds: [weatherEmbed] });
     } catch (e) {
         console.error("Error display", e)
     }
-
 }
 
 const displayError = async function (interaction, data) {
     try {
-        const exampleEmbed = new EmbedBuilder()
+        const errorEmbed = new EmbedBuilder()
             .setColor(0xFF001A)
             .setDescription(data)
-        await interaction.editReply({ embeds: [exampleEmbed] });
+        await interaction.editReply({ embeds: [errorEmbed] });
     } catch (e) {
         console.error("Error display error", e)
     }
 
 }
-function getFormattedDate(today) 
-{
+function getFormattedDate(today) {
     var week = new Array('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
     var month = new Array('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
-    var day  = week[today.getDay()];
-    var month   = month[today.getMonth()];
-    var dd   = today.getDate();
+    var day = week[today.getDay()];
+    var month = month[today.getMonth()];
+    var dd = today.getDate();
     var yyyy = today.getFullYear();
     var hour = today.getHours();
     var min = today.getMinutes();
     var sec = today.getSeconds();
 
-    if(dd<10) { dd='0'+dd } 
-    if(min<10) { min='0'+min } 
-    if(sec<10) { sec='0'+sec }
+    if (dd < 10) { dd = '0' + dd }
+    if (min < 10) { min = '0' + min }
+    if (sec < 10) { sec = '0' + sec }
     return day + " " + month + " " + dd + " " + yyyy + " " + hour + ":" + min + ":" + sec;
 }
-function getUser(interaction){
-    console.log(interaction.user.tag);
+function getUser(interaction) {
+    return (interaction.user.tag);
 }
-const writeFile = function(file, information){
+const writeFile = function (file, information) {
     fs.appendFile(file, information, function (err) {
-        if (err) return console.log(err);
-        console.log('Log add');
-      });
+        if (err) return console.error(err);
+    });
 }
-const writeLog = function(file){
+const writeLog = function (file) {
     var date = new Date();
     var today = getFormattedDate(date);
     var user = getUser(interaction);
@@ -129,13 +125,10 @@ const writeLog = function(file){
     today = "\n[" + today + "]";
     var log = today + user;
     console.log(log);
-    //writeFile(file, today);
-
 }
 const getCountries = async function () {
     try {
         let request = await axios.get("https://countriesnow.space/api/v0.1/countries");
-        // console.log("La reponse est : ", request);
         return request.data.data;
     } catch (e) {
         console.error("Error country", e);
@@ -156,9 +149,9 @@ const getCities = async function () {
 var last = (Date.now() / 1000 / 60);
 var cities = [];
 const getCache = async function () {
-    if((Date.now() / 1000 / 60) - last >= 0.4){
+    if ((Date.now() / 1000 / 60) - last >= 0.4) {
         last = (Date.now() / 1000 / 60);
-        console.log("Trop vieux"); 
+        console.log("Trop vieux");
         cities = await getCities();
     }
     return cities;
@@ -193,7 +186,7 @@ client.once('ready', () => {
         });
         console.log('Successfully reloaded application (/) commands.');
     } catch (err) {
-        console.log(err);
+        console.error(err);
     }
 })()
 
