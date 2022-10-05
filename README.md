@@ -49,5 +49,5 @@ A discord bot that gives you the weather in the chosen city
 
 ## Fonctionnalité 
 
-/weather city to get the weather forecast for the chosen city  
-/weather to get the weather forecast for a random city
+```/weather city``` to get the weather forecast for the chosen city  
+```/weather``` to get the weather forecast for a random city
